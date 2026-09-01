@@ -7,6 +7,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../models/study_day.dart';
 import '../models/study_session.dart';
+import '../data/study_plan.dart';
 import 'notification_service.dart';
 
 class ScheduleService extends ChangeNotifier {
@@ -22,6 +23,7 @@ class ScheduleService extends ChangeNotifier {
   bool _isPaused = false;
   Duration _totalPauseOffset = Duration.zero;
   DateTime? _pauseStartTime;
+  DateTime? _planStartDate;
 
   // State exposed to UI
   StudySession? _currentSession;
@@ -42,6 +44,19 @@ class ScheduleService extends ChangeNotifier {
     if (pauseStartStr != null) {
       _pauseStartTime = DateTime.parse(pauseStartStr);
     }
+
+    final planStartStr = prefs.getString('planStartDate');
+    if (planStartStr != null) {
+      _planStartDate = DateTime.parse(planStartStr);
+    } else {
+      // First boot ever: start today!
+      _planStartDate = DateTime(
+        DateTime.now().year,
+        DateTime.now().month,
+        DateTime.now().day,
+      );
+      await prefs.setString('planStartDate', _planStartDate!.toIso8601String());
+    }
   }
 
   Future<void> _saveState() async {
@@ -61,6 +76,9 @@ class ScheduleService extends ChangeNotifier {
     }
     if (_currentDay != null) {
       await prefs.setInt('currentDayNumber', _currentDay!.dayNumber);
+    }
+    if (_planStartDate != null) {
+      await prefs.setString('planStartDate', _planStartDate!.toIso8601String());
     }
   }
 
@@ -134,6 +152,12 @@ class ScheduleService extends ChangeNotifier {
     _isPaused = false;
     _totalPauseOffset = Duration.zero;
     _pauseStartTime = null;
+
+    // Adjust planStartDate so that "today" computes to the new day.dayNumber
+    final now = DateTime.now();
+    final todayMidnight = DateTime(now.year, now.month, now.day);
+    _planStartDate = todayMidnight.subtract(Duration(days: day.dayNumber - 1));
+
     startDay(day);
   }
 
@@ -193,6 +217,22 @@ class ScheduleService extends ChangeNotifier {
     if (_currentDay == null) return;
 
     final now = _effectiveTime;
+
+    // Check for auto-advance to a new day at midnight
+    if (_planStartDate != null) {
+      final realNow = DateTime.now();
+      final todayMidnight = DateTime(realNow.year, realNow.month, realNow.day);
+      final computedDayNumber =
+          todayMidnight.difference(_planStartDate!).inDays + 1;
+
+      // We only care about advancing. (If they changed it in settings, we already adjusted planStartDate)
+      if (computedDayNumber > _currentDay!.dayNumber) {
+        // Midnight crossed! Reset everything and jump to the new day!
+        final nextDayIndex = (computedDayNumber - 1).clamp(0, 29);
+        changeDay(StaticStudyPlan.plan30Days[nextDayIndex]);
+        return; // changeDay will call startDay which calls _updateState again
+      }
+    }
 
     // Convert current time to a duration since midnight to match session.startTime
     final durationSinceMidnight = Duration(
