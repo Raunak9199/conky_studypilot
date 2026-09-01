@@ -92,7 +92,7 @@ lib/
     └── progress_indicator.dart
 ```
 
-Avoid unnecessary Bloc/Riverpod/etc. for V1. A lightweight state approach such as `ChangeNotifier`/`ValueNotifier` is sufficient.
+Avoid unnecessary Bloc/Riverpod/etc. for V1. A lightweight state approach such as `ChangeNotifier`/`ValueNotifier` is sufficient or if needed, use provider state management.
 
 ## Data Models
 
