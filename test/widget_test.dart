@@ -8,8 +8,8 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const StudyPilotApp());
 
-    // Verify that the Today screen skeleton is shown.
-    expect(find.text('Today Screen Skeleton'), findsOneWidget);
+    // Verify that the Today screen is shown with mocked data.
+    expect(find.text('DAY 1 / 30'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 }
