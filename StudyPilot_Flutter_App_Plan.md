@@ -440,7 +440,7 @@ Paused state:
 │  Paused: 18:32                │
 │  Today's delay: +18:32        │
 │                               │
-│        [ ▶ RESUME ]            │
+│        [ ▶ RESUME ]           │
 └───────────────────────────────┘
 ```
 

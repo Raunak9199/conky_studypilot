@@ -12,6 +12,7 @@ class StudyPilotApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Conky StudyPilot',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
