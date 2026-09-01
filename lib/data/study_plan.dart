@@ -38,6 +38,13 @@ class StaticStudyPlan {
       startTime: Duration(hours: 17, minutes: 45),
       duration: Duration(minutes: 45),
     ),
+    const StudySession(
+      id: 'late_night',
+      title: 'Late Night Review (Testing)',
+      description: 'Review session to test the app late at night',
+      startTime: Duration(hours: 23, minutes: 00),
+      duration: Duration(hours: 1, minutes: 30),
+    ),
   ];
 
   static List<StudyDay> get plan30Days {

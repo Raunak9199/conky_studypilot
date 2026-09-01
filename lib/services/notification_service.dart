@@ -73,6 +73,10 @@ class NotificationService {
     );
   }
 
+  Future<void> cancelAllNotifications() async {
+    await _flutterLocalNotificationsPlugin.cancelAll();
+  }
+
   /// Schedules a notification for a specific session
   Future<void> scheduleSessionNotification(
     StudySession session,

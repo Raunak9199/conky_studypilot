@@ -1,63 +1,108 @@
 // ignore_for_file: dead_code
 import 'package:flutter/material.dart';
 
-import '../data/study_plan.dart';
+import 'package:provider/provider.dart';
+
 import '../models/study_session.dart';
+import '../services/schedule_service.dart';
 
 class TodayScreen extends StatelessWidget {
   const TodayScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for Phase 3 UI testing
-    final currentDay = StaticStudyPlan.plan30Days[0];
-    final currentSession = currentDay.sessions[0];
-    final nextSession = currentDay.sessions[1];
-    bool isPaused = false;
+    return Consumer<ScheduleService>(
+      builder: (context, schedule, child) {
+        final currentDay = schedule.currentDay;
+        if (currentDay == null) {
+          return const Scaffold(
+            body: Center(child: Text('No active schedule')),
+          );
+        }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Conky StudyPilot'), centerTitle: true),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'DAY ${currentDay.dayNumber} / 30',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2),
-              ),
-              const SizedBox(height: 32),
-              _buildNowCard(context, currentSession),
-              const SizedBox(height: 16),
-              _buildNextCard(context, nextSession),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
-                label: Text(
-                  isPaused ? 'RESUME' : 'PAUSE SCHEDULE',
-                  style: const TextStyle(fontSize: 18),
-                ),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: isPaused
-                      ? Colors.green
-                      : Colors.amber.shade700,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
+        final currentSession = schedule.currentSession;
+        final nextSession = schedule.nextSession;
+        final isPaused = schedule.isPaused;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Conky StudyPilot'),
+            centerTitle: true,
           ),
-        ),
-      ),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'DAY ${currentDay.dayNumber} / 30',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  if (currentSession != null)
+                    _buildNowCard(
+                      context,
+                      currentSession,
+                      schedule.timeRemainingInCurrent,
+                      schedule,
+                    )
+                  else
+                    const Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text(
+                          'No active session right now.',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  if (nextSession != null)
+                    _buildNextCard(
+                      context,
+                      nextSession,
+                      schedule.timeUntilNext,
+                      schedule,
+                    ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      schedule.togglePause();
+                    },
+                    icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                    label: Text(
+                      isPaused ? 'RESUME' : 'PAUSE SCHEDULE',
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: isPaused
+                          ? Colors.green
+                          : Colors.amber.shade700,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildNowCard(BuildContext context, StudySession session) {
+  Widget _buildNowCard(
+    BuildContext context,
+    StudySession session,
+    Duration timeRemaining,
+    ScheduleService schedule,
+  ) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -91,13 +136,16 @@ class TodayScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              _formatTimeRange(session),
+              _formatTimeRange(
+                schedule.getShiftedStartTime(session),
+                schedule.getShiftedEndTime(session),
+              ),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
-            const Text(
-              '42 min remaining', // Mocked remaining time
-              style: TextStyle(
+            Text(
+              '${timeRemaining.inMinutes} min remaining',
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: Colors.grey,
@@ -109,7 +157,12 @@ class TodayScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNextCard(BuildContext context, StudySession session) {
+  Widget _buildNextCard(
+    BuildContext context,
+    StudySession session,
+    Duration startsIn,
+    ScheduleService schedule,
+  ) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -139,13 +192,16 @@ class TodayScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              _formatTimeRange(session),
+              _formatTimeRange(
+                schedule.getShiftedStartTime(session),
+                schedule.getShiftedEndTime(session),
+              ),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Starts in 12 min', // Mocked starts in time
-              style: TextStyle(
+            Text(
+              'Starts in ${startsIn.inHours > 0 ? '${startsIn.inHours}h ' : ''}${startsIn.inMinutes % 60}m',
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: Colors.grey,
@@ -157,15 +213,13 @@ class TodayScreen extends StatelessWidget {
     );
   }
 
-  String _formatTimeRange(StudySession session) {
-    final start = session.startTime;
-    final end = Duration(minutes: start.inMinutes + session.duration.inMinutes);
-    return '${_formatDuration(start)} – ${_formatDuration(end)}';
+  String _formatTimeRange(DateTime start, DateTime end) {
+    return '${_formatTime(start)} – ${_formatTime(end)}';
   }
 
-  String _formatDuration(Duration d) {
-    final hours = d.inHours.toString().padLeft(2, '0');
-    final minutes = (d.inMinutes % 60).toString().padLeft(2, '0');
+  String _formatTime(DateTime time) {
+    final hours = time.hour.toString().padLeft(2, '0');
+    final minutes = time.minute.toString().padLeft(2, '0');
     return '$hours:$minutes';
   }
 }
