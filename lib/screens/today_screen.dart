@@ -17,39 +17,41 @@ class TodayScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Conky StudyPilot'), centerTitle: true),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'DAY ${currentDay.dayNumber} / 30',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2),
-            ),
-            const SizedBox(height: 32),
-            _buildNowCard(context, currentSession),
-            const SizedBox(height: 16),
-            _buildNextCard(context, nextSession),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
-              label: Text(
-                isPaused ? 'RESUME' : 'PAUSE SCHEDULE',
-                style: const TextStyle(fontSize: 18),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'DAY ${currentDay.dayNumber} / 30',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.2),
               ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: isPaused
-                    ? Colors.green
-                    : Colors.amber.shade700,
-                foregroundColor: Colors.white,
+              const SizedBox(height: 32),
+              _buildNowCard(context, currentSession),
+              const SizedBox(height: 16),
+              _buildNextCard(context, nextSession),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () {},
+                icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                label: Text(
+                  isPaused ? 'RESUME' : 'PAUSE SCHEDULE',
+                  style: const TextStyle(fontSize: 18),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: isPaused
+                      ? Colors.green
+                      : Colors.amber.shade700,
+                  foregroundColor: Colors.white,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
