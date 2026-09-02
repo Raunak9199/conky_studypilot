@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -61,7 +62,7 @@ class SyncService extends ChangeNotifier {
         return true;
       }
     } catch (e) {
-      debugPrint("Status check failed: $e");
+      log("Status check failed: $e");
     }
     _isOnline = false;
     notifyListeners();
@@ -93,10 +94,10 @@ class SyncService extends ChangeNotifier {
 
         return data;
       } else {
-        debugPrint("Sync failed with status: ${response.statusCode}");
+        log("Sync failed with status: ${response.statusCode}");
       }
     } catch (e) {
-      debugPrint("Fetch sync data failed: $e");
+      log("Fetch sync data failed: $e");
     }
 
     _isOnline = false;
@@ -111,7 +112,7 @@ class SyncService extends ChangeNotifier {
       try {
         return json.decode(dataStr);
       } catch (e) {
-        debugPrint("Failed to decode local sync data: $e");
+        log("Failed to decode local sync data: $e");
       }
     }
     return null;
@@ -177,48 +178,11 @@ class SyncService extends ChangeNotifier {
         parsedDays[dayNumber] = sessions;
       }
 
-      // Generate 30 days based on defined patterns
-      final maxDefinedDay = parsedDays.keys.reduce((a, b) => a > b ? a : b);
-      for (int i = 1; i <= 30; i++) {
-        List<StudySession> sessionsForDay;
-
-        if (parsedDays.containsKey(i)) {
-          // Exact match
-          sessionsForDay = parsedDays[i]!;
-        } else if (maxDefinedDay == 1) {
-          // "Same for all days" logic
-          sessionsForDay = parsedDays[1]!
-              .map(
-                (s) => StudySession(
-                  id: '${i}_${s.id.split('_').last}',
-                  title: s.title,
-                  description: s.description,
-                  startTime: s.startTime,
-                  duration: s.duration,
-                ),
-              )
-              .toList();
-        } else if (maxDefinedDay == 7) {
-          // "Weekly" logic (modulo 7)
-          int weekDay = ((i - 1) % 7) + 1;
-          sessionsForDay = parsedDays.containsKey(weekDay)
-              ? parsedDays[weekDay]!
-                    .map(
-                      (s) => StudySession(
-                        id: '${i}_${s.id.split('_').last}',
-                        title: s.title,
-                        description: s.description,
-                        startTime: s.startTime,
-                        duration: s.duration,
-                      ),
-                    )
-                    .toList()
-              : [];
-        } else {
-          // Fallback to empty if it's missing (e.g. user manually deleted a day)
-          sessionsForDay = [];
-        }
-
+      // Generate days based on what desktop sent
+      final maxDefinedDay = parsedDays.isNotEmpty ? parsedDays.keys.reduce((a, b) => a > b ? a : b) : 1;
+      
+      for (int i = 1; i <= maxDefinedDay; i++) {
+        final sessionsForDay = parsedDays[i] ?? [];
         studyDays.add(StudyDay(dayNumber: i, sessions: sessionsForDay));
       }
     }

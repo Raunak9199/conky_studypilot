@@ -1,5 +1,5 @@
-// ignore_for_file: dead_code
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import 'package:provider/provider.dart';
 
@@ -36,12 +36,19 @@ class TodayScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'DAY ${currentDay.dayNumber} / 30',
+                    'DAY ${currentDay.dayNumber} / ${schedule.studyDays.length}',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
                     ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 32),
                   if (currentSession != null)

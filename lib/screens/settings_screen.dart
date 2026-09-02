@@ -285,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: const Text('Select which day of the plan you are on'),
                 trailing: DropdownButton<int>(
                   value: currentDayNumber,
-                  items: List.generate(30, (index) {
+                  items: List.generate(schedule.studyDays.length, (index) {
                     final day = index + 1;
                     return DropdownMenuItem(
                       value: day,

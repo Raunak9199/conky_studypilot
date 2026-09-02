@@ -34,9 +34,10 @@ class ScheduleService extends ChangeNotifier {
   StudyDay? get currentDay => _currentDay;
   StudySession? get currentSession => _currentSession;
   StudySession? get nextSession => _nextSession;
-  
+  List<StudyDay> get studyDays => _plan30Days;
+
   List<StudyDay> _plan30Days = StaticStudyPlan.plan30Days;
-  
+
   Future<void> init({List<StudyDay>? syncedDays}) async {
     final prefs = await SharedPreferences.getInstance();
     _isPaused = prefs.getBool('isPaused') ?? false;
@@ -60,13 +61,14 @@ class ScheduleService extends ChangeNotifier {
       );
       await prefs.setString('planStartDate', _planStartDate!.toIso8601String());
     }
-    
+
     if (syncedDays != null && syncedDays.isNotEmpty) {
       _plan30Days = syncedDays;
     }
   }
 
-  void syncWithData(List<StudyDay> newPlan, {
+  void syncWithData(
+    List<StudyDay> newPlan, {
     required bool isPaused,
     required DateTime? pauseStartedAt,
     required Duration totalPauseOffset,
@@ -76,16 +78,16 @@ class ScheduleService extends ChangeNotifier {
     _isPaused = isPaused;
     _pauseStartTime = pauseStartedAt;
     _totalPauseOffset = totalPauseOffset;
-    
+
     // Adjust planStartDate so that "today" computes to the new dayNumber
     final now = DateTime.now();
     final todayMidnight = DateTime(now.year, now.month, now.day);
     _planStartDate = todayMidnight.subtract(Duration(days: dayNumber - 1));
-    
+
     // Jump to the current day in the new plan
     final dayIndex = (dayNumber - 1).clamp(0, _plan30Days.length - 1);
     startDay(_plan30Days[dayIndex]);
-    
+
     _saveState();
   }
 
@@ -265,7 +267,10 @@ class ScheduleService extends ChangeNotifier {
       // We only care about advancing. (If they changed it in settings, we already adjusted planStartDate)
       if (computedDayNumber > _currentDay!.dayNumber) {
         // Midnight crossed! Reset everything and jump to the new day!
-        final nextDayIndex = (computedDayNumber - 1).clamp(0, _plan30Days.length - 1);
+        final nextDayIndex = (computedDayNumber - 1).clamp(
+          0,
+          _plan30Days.length - 1,
+        );
         changeDay(_plan30Days[nextDayIndex]);
         return; // changeDay will call startDay which calls _updateState again
       }
